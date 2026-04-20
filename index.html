@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>20m Courtyard Lab</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <link rel="stylesheet" href="https://unpkg.com" />
+  <style>
+    body {margin:0; padding:0;}
+    #map {height:100vh; width:100vw;}
+    .info {position:absolute; top:10px; left:10px; background:rgba(255,255,255,0.9); padding:10px; border-radius:8px; box-shadow:0 2px 10px rgba(0,0,0,0.2); z-index:1000; font-family:sans-serif; font-size:12px;}
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+  <div class="info">
+    <strong>Bullet Impact Audit</strong><br>
+    40.27751656, -111.71404382<br>
+    <span style="color:#c00;">Red: 20m Radius</span><br>
+    2.MOV: 7.68m | IMG_6368: 7.62m<br>
+    <b>Tap map to measure new points</b>
+  </div>
+  <script src="https://unpkg.com"></script>
+  <script>
+    const cLat = 40.27751656, cLon = -111.71404382;
+    const map = L.map('map', {zoomControl: false}).setView([cLat, cLon], 21);
+    L.tileLayer('https://arcgisonline.com{z}/{y}/{x}', { maxZoom: 22 }).addTo(map);
+    L.marker([cLat, cLon]).addTo(map).bindPopup("Impact Point");
+    L.circle([cLat, cLon], {color:'#c00', radius:20, fillOpacity:0.1}).addTo(map);
+    L.marker([40.27744990, -111.71402004]).addTo(map).bindPopup("2.MOV (7.68m)");
+    L.marker([40.27745128, -111.71401642]).addTo(map).bindPopup("IMG_6368 (7.62m)");
+
+    map.on('click', function(e) {
+      const R = 6371000;
+      const dLat = (e.latlng.lat - cLat) * Math.PI / 180;
+      const dLon = (e.latlng.lng - cLon) * Math.PI / 180;
+      const a = Math.sin(dLat/2)**2 + Math.cos(cLat*Math.PI/180) * Math.cos(e.latlng.lat*Math.PI/180) * Math.sin(dLon/2)**2;
+      const dist = (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))) * R;
+      L.marker(e.latlng).addTo(map).bindPopup(`Distance: ${dist.toFixed(2)}m`).openPopup();
+    });
+  </script>
+</body>
+</html>
