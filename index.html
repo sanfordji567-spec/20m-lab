@@ -24,7 +24,13 @@
   <script>
     const cLat = 40.27751656, cLon = -111.71404382;
     const map = L.map('map', {zoomControl: false}).setView([cLat, cLon], 21);
-    L.tileLayer('https://arcgisonline.com{z}/{y}/{x}', { maxZoom: 22 }).addTo(map);
+    
+    // Updated to Google Satellite for faster mobile loading
+    L.tileLayer('https://{s}://{x}&y={y}&z={z}', {
+        maxZoom: 22,
+        subdomains:['mt0','mt1','mt2','mt3']
+    }).addTo(map);
+
     L.marker([cLat, cLon]).addTo(map).bindPopup("Impact Point");
     L.circle([cLat, cLon], {color:'#c00', radius:20, fillOpacity:0.1}).addTo(map);
     L.marker([40.27744990, -111.71402004]).addTo(map).bindPopup("2.MOV (7.68m)");
@@ -34,7 +40,7 @@
       const R = 6371000;
       const dLat = (e.latlng.lat - cLat) * Math.PI / 180;
       const dLon = (e.latlng.lng - cLon) * Math.PI / 180;
-      const a = Math.sin(dLat/2)**2 + Math.cos(cLat*Math.PI/180) * Math.cos(e.latlng.lat*Math.PI/180) * Math.sin(dLon/2)**2;
+      const a = Math.sin(dLat/2)**2 + Math.cos(cLat * Math.PI / 180) * Math.cos(e.latlng.lat * Math.PI / 180) * Math.sin(dLon/2)**2;
       const dist = (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))) * R;
       L.marker(e.latlng).addTo(map).bindPopup(`Distance: ${dist.toFixed(2)}m`).openPopup();
     });
