@@ -1,49 +1,73 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <title>20m Courtyard Lab</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <style>
-    body {margin:0; padding:0;}
-    #map {height:100vh; width:100vw;}
-    .info {position:absolute; top:10px; left:10px; background:rgba(255,255,255,0.9); padding:10px; border-radius:8px; box-shadow:0 2px 10px rgba(0,0,0,0.2); z-index:1000; font-family:sans-serif;}
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Map with Leaflet.js</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>
+        #map { width: 100%; height: 500px; }
+        .concentric { fill-opacity: 0.1; }
+        .probability-wedge { fill-opacity: 0.5; }
+    </style>
 </head>
 <body>
-  <div id="map"></div>
-  <div class="info">
-    <strong>Bullet Impact Audit</strong><br>
-    40.27751656, -111.71404382<br>
-    <span style="color:#c00;">Red: 20m Radius</span><br>
-    2.MOV: 7.68m | IMG_6368: 7.62m<br>
-    <b>Tap map to measure new points</b>
-  </div>
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script>
-    const cLat = 40.27751656, cLon = -111.71404382;
-    const map = L.map('map', {zoomControl: false}).setView([cLat, cLon], 21);
-    
-    // Google Satellite tiles
-    L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
-        maxZoom: 22,
-        subdomains:['mt0','mt1','mt2','mt3']
-    }).addTo(map);
+    <div id="map"></div>
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script>
+        // Initialize the map
+        var map = L.map('map').setView([40.0077, -105.2656], 13);
+        L.tileLayer('https://{s}.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            maxZoom: 18
+        }).addTo(map);
 
-    L.marker([cLat, cLon]).addTo(map).bindPopup("Impact Point");
-    L.circle([cLat, cLon], {color:'#c00', radius:20, fillOpacity:0.1}).addTo(map);
-    L.marker([40.27744990, -111.71402004]).addTo(map).bindPopup("2.MOV (7.68m)");
-    L.marker([40.27745128, -111.71401642]).addTo(map).bindPopup("IMG_6368 (7.62m);");
+        // Base layer marker for bullet impact
+        var bulletImpactMarker = L.marker([40.0077, -105.2656]).addTo(map);
 
-    map.on('click', function(e) {
-      const R = 6371000;
-      const dLat = (e.latlng.lat - cLat) * Math.PI / 180;
-      const dLon = (e.latlng.lng - cLon) * Math.PI / 180;
-      const a = Math.sin(dLat/2)**2 + Math.cos(cLat * Math.PI / 180) * Math.cos(e.latlng.lat * Math.PI / 180) * Math.sin(dLon/2)**2;
-      const dist = (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))) * R;
-      L.marker(e.latlng).addTo(map).bindPopup(`Distance: ${dist.toFixed(2)}m`).openPopup();
-    });
-  </script>
+        // Concentric circles
+        var distances = [2, 15, 30]; // distances in meters
+        distances.forEach(function(distance) {
+            L.circle([40.0077, -105.2656], {
+                radius: distance,
+                className: 'concentric'
+            }).addTo(map);
+        });
+
+        // 20m red reference circle
+        L.circle([40.0077, -105.2656], {
+            radius: 20,
+            color: 'red',
+            className: 'concentric'
+        }).addTo(map);
+
+        // Blue probability wedge (bearing 315°, 60° sector)
+        var wedgeCoords = [
+            [40.0077, -105.2656],
+            [40.0077 + (0.0005 * Math.cos(Math.PI * 315 / 180)), -105.2656 + (0.0005 * Math.sin(Math.PI * 315 / 180))],
+            [40.0077 + (0.0005 * Math.cos(Math.PI * (315 + 60) / 180)), -105.2656 + (0.0005 * Math.sin(Math.PI * (315 + 60) / 180))]
+        ];
+        L.polygon(wedgeCoords, { className: 'probability-wedge' }).addTo(map);
+
+        // Add camera markers (example coordinates)
+        var cameraLocations = [
+            [40.0077, -105.2656],
+            [40.0080, -105.2660],
+            [40.0070, -105.2645]
+        ];
+        cameraLocations.forEach(function(location) {
+            L.marker(location).addTo(map);
+        });
+
+        // Click to add pin functionality
+        map.on('click', function(e) {
+            var newMarker = L.marker(e.latlng).addTo(map);
+            newMarker.bindPopup('User-added pin. Right-click to delete.');
+
+            // Right-click to delete
+            newMarker.on('contextmenu', function() {
+                map.removeLayer(newMarker);
+            });
+        });
+    </script>
 </body>
 </html>
